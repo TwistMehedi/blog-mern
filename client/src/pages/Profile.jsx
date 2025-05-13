@@ -1,9 +1,16 @@
 import React, { useState } from "react";
+import { useGetCurrentUserQuery } from "../features/user/userApi";
 
-export default function ProfilePage () {
+export default function Profile () {
   const [showPassword, setShowPassword] = useState(false);
 
   // Dummy user data (replace with real data)
+
+  const {data} = useGetCurrentUserQuery()
+  const userr = data?.user;
+  console.log(userr);
+  
+
   const user = {
     name: "John Doe",
     email: "johndoe@example.com",

@@ -1,20 +1,34 @@
-import React from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
+import { useRegisterUserMutation } from "../features/user/userApi";
+import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
-export default function Register () {
+export default function Register() {
+  const [registerUser] = useRegisterUserMutation();
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isValid },
   } = useForm({ mode: "onChange" });
 
-  const onSubmit = (data) => {
-    console.log("Register Data:", data);
-    // Add your registration logic here
+  const onSubmit = async (registerData) => {
+    try {
+      const res = await registerUser(registerData);
+
+      if (res.data) {
+       toast.success(res.data.message);
+      }
+    } catch (error) {
+      console.error("Register failed", error);
+       toast.error(error?.data?.message || "Registration failed");
+    }
   };
 
   return (
+    <>
+    <ToastContainer position="top-center" autoClose={3000} />
     <div className="flex justify-center items-center min-h-screen bg-base-200 px-4">
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -82,6 +96,29 @@ export default function Register () {
           )}
         </div>
 
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">Confirm Password</span>
+          </label>
+          <input
+            type="password"
+            placeholder="Enter your confirm password"
+            className={`input input-bordered w-full ${
+              errors.confirmPassword ? "input-error" : ""
+            }`}
+            {...register("confirmPassword", {
+              required: "Confirm Password is required",
+              validate: (value) =>
+                value === watch("password") || "Password do not match",
+            })}
+          />
+          {errors.confirmPassword && (
+            <span className="text-error text-sm mt-1">
+              {errors.confirmPassword.message}
+            </span>
+          )}
+        </div>
+
         {/* Submit Button */}
         <button
           type="submit"
@@ -90,9 +127,11 @@ export default function Register () {
         >
           Register
         </button>
-        <Link to="/login" className="text-blue-500">You have account so login please</Link>
+        <Link to="/login" className="text-blue-500">
+          You have account so login please
+        </Link>
       </form>
-       
     </div>
+    </>
   );
-};
+}
