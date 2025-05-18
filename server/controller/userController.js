@@ -95,7 +95,8 @@ export const verifyEmail = async (req, res) => {
       return res
         .status(400)
         .json({ message: "User already verified", success: false });
-    }
+    };
+     
 
     const user = await User.create({ name, email, password, isVerified: true });
     if (!user) {
@@ -105,10 +106,12 @@ export const verifyEmail = async (req, res) => {
       });
     };
 
+
     if (user) {
       user.verificationToken = undefined;
       user.verificationTokenExpiresAt = undefined;
     };
+
 
     return res
       .cookie("token", token, {
@@ -121,9 +124,8 @@ export const verifyEmail = async (req, res) => {
       .json({
         message: "Email verified & user registered",
         success: true,
-        user
+        user,
       });
-      
   } catch (error) {
     console.error(error.message);
     return res.status(500).json({
@@ -203,7 +205,6 @@ export const logOut = async (_, res) => {
     });
   }
 };
-
 
 export const profile = async (req, res) => {
   try {
@@ -331,4 +332,106 @@ export const deleteUser = async (req, res) => {
       success: false,
     });
   }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(404).json({
+        message: "User with this email does not exist",
+        success: false,
+      });
+    }
+
+    const token = jwt.sign({ email }, process.env.SECRET_KEY, { expiresIn: "10m" });
+ 
+    existingUser.resetPasswordToken = token;
+    existingUser.resetPasswordTokenExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    await existingUser.save();
+ 
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+  
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset - Blogify",
+      html: `
+        <h1>Reset Your Password</h1>
+        <p>Click the link below to reset your password. The link will expire in 10 minutes:</p>
+        <a href="${process.env.FRONTEND_URL}/forgot-password?token=${token}" target="_blank">Reset Password</a>
+      `,
+    };
+
+ 
+    await transporter.sendMail(mailOptions);
+
+   
+    return res.status(200).json({
+      message: "Password reset email sent successfully",
+      success: true,
+      token
+    });
+
+  } catch (error) {
+    console.error("Forgot password error:", error.message);
+    return res.status(500).json({
+      message: "Internal server error: " + error.message,
+      success: false,
+    });
+  }
+};
+
+export const resetPassword = async(req, res)=>{
+   try {
+    const {token} = req.query;
+  const {newPassword, confirmPassword} = req.body;
+  if(!token || !newPassword || !confirmPassword){
+    return res.status(404).json({
+      message:"Token or password fields are missing",
+      success: false,
+    })
+  };
+
+   if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match.",
+        success: false,
+      });
+    };
+
+  const user = await User.findOne({resetPasswordToken:token, resetPasswordTokenExpiresAt: { $gt: Date.now()},});
+  if(!user){
+    return res.status(404).json({
+      message:"Invalid or expired token.",
+      success: false
+    })
+  };
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.resetPasswordToken = undefined,
+  user.resetPasswordTokenExpiresAt = undefined
+
+  await user.save();
+  return res.status(200).json({ message: "Password updated", success: true });
+
+   } catch (error) {
+    console.error(error.message)
+    return res.status(500).json({
+      message:"Internal server update password error",
+      error:error.message,
+      success: false
+    })
+   };
 };

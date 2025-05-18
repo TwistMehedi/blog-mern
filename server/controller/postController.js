@@ -4,13 +4,14 @@ import { deleteImage, uploadMedia } from "../utils/cloudinay.js";
 export const createPost = async (req, res) => {
   try {
     const { postTitle, subTitle, postDescription, category } = req.body;
+    // console.log(category);
     const file = req.file;
     if (!postTitle || !subTitle || !postDescription || !category) {
       return res.status(400).json({
         message: "Somthing is missing",
         success: false,
       });
-    };
+    }
 
     const image = file
       ? await uploadMedia(file.path)
@@ -101,12 +102,14 @@ export const updatePost = async (req, res) => {
 export const getSingleUserAllPosts = async (req, res) => {
   try {
     const userId = req.id;
-    const posts = await Post.find({ user: userId }).populate({
-      path: "comments",
-      populate: {
-        path: "user",
-      },
-    }).populate("reactions");
+    const posts = await Post.find({ user: userId })
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+        },
+      })
+      .populate("reactions");
 
     if (!posts || posts.length === 0) {
       return res
@@ -117,21 +120,19 @@ export const getSingleUserAllPosts = async (req, res) => {
     const formattedPosts = posts.map((post) => ({
       _id: post._id,
       title: post.postTitle,
-      description:post.postDescription,
+      description: post.postDescription,
       subtitle: post.subTitle,
-      image:post.image,
+      image: post.image,
       reactions: Array.isArray(post.reactions) ? post.reactions.length : 0,
       commentCount: Array.isArray(post.comments) ? post.comments.length : 0,
       createdAt: post.createdAt,
     }));
 
-    return res
-      .status(200)
-      .json({
-        message: "Single user all post founded",
-        success: true,
-        posts: formattedPosts,
-      });
+    return res.status(200).json({
+      message: "Single user all post founded",
+      success: true,
+      posts: formattedPosts,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -148,7 +149,8 @@ export const getAllPosts = async (req, res) => {
       .populate({
         path: "comments",
         populate: { path: "user", select: "name" },
-      }).populate("reactions");
+      })
+      .populate("reactions");
 
     if (!posts || posts.length === 0) {
       return res
@@ -158,10 +160,12 @@ export const getAllPosts = async (req, res) => {
 
     const formattedPosts = posts.map((post) => ({
       _id: post._id,
-      podtTitle: post.postTitle,
+      postTitle: post.postTitle,
       postDescription: post.postDescription,
+      category: post.category,
+      image: post.image,
       user: post.user,
-      reactions: Array.isArray(post.reactions)? post.reactions?.length : 0,
+      reactions: Array.isArray(post.reactions) ? post.reactions?.length : 0,
       comments: post.comments?.map((comment) => ({
         _id: comment._id,
         text: comment.text,
@@ -196,7 +200,8 @@ export const getSinglePost = async (req, res) => {
           path: "user",
           select: "name",
         },
-      }).populate("reactions");
+      })
+      .populate("reactions");
 
     const formattedComments = post.comments?.map((comment) => ({
       _id: comment._id,
@@ -210,9 +215,9 @@ export const getSinglePost = async (req, res) => {
       title: post.postTitle,
       description: post.postDescription,
       user: post.user,
-      reactions: post.reactions?.map(react=>({
+      reactions: post.reactions?.map((react) => ({
         user: react.user,
-        react
+        react,
       })),
       comments: formattedComments,
       createdAt: post.createdAt,
@@ -223,13 +228,11 @@ export const getSinglePost = async (req, res) => {
         .status(404)
         .json({ message: "Post not found", success: false });
     }
-    return res
-      .status(200)
-      .json({
-        message: "Single user post founded",
-        success: true,
-        post: formattedPosts,
-      });
+    return res.status(200).json({
+      message: "Single user post founded",
+      success: true,
+      post: formattedPosts,
+    });
   } catch (error) {
     return res.status(500).json({
       message: `Internal server get single user post error ${error.message}`,
@@ -286,7 +289,7 @@ export const reactions = async (req, res) => {
 export const deletePost = async (req, res) => {
   try {
     const { postId } = req.body;
-    const userId = req.id
+    const userId = req.id;
     const post = await Post.findById(postId)
       .populate("reactions")
       .populate({
@@ -294,17 +297,16 @@ export const deletePost = async (req, res) => {
         populate: { path: "user", select: "name" },
       });
 
-      if(post.user.toString() !== userId.toString()){
-        return res.status(403).json({ message: "Unauthorized", success: false });
-      }
+    if (post.user.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "Unauthorized", success: false });
+    }
 
-    await Post.findByIdAndDelete(post, {user:userId});
+    await Post.findByIdAndDelete(post, { user: userId });
 
-     return res.status(200).json({
+    return res.status(200).json({
       message: "Post deleted successfully",
       success: true,
     });
-
   } catch (error) {
     return res.statsu(500).json({
       message: "Post delete problem" + error.message,

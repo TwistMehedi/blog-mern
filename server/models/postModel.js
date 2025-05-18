@@ -15,7 +15,7 @@ export const postSchema = new mongoose.Schema(
     postTitle: { type: String, required: true, trim: true, maxlength: 50 },
     postDescription: { type: String, required: true, trim: true },
     subTitle:{type: String, required: true},
-    category:{type: String , enum:["Helth", "Water", "Food", "Tech"], required: true},
+    category:{type: String , required: true,enum: ["technology", "news", "sports", "lifestyle", "health"],},
     image: {
       public_id: { type: String, default: "" },
       url: { type: String, default: "" },
