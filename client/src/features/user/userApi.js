@@ -56,6 +56,13 @@ export const userApi = createApi({
         method:"GET"
       }),
        providesTags: ['User'],
+    }),
+    //log-out user
+    logOutUser:(builder.mutation)({
+      query:()=>({
+        url:"/logout",
+        method:"GET"
+      })
     })
   }),
 });
@@ -64,5 +71,6 @@ export const {
   useRegisterUserMutation,
   useLoginUserMutation,
   useVerifyUserEmailQuery,
-  useGetCurrentUserQuery
+  useGetCurrentUserQuery,
+  useLogOutUserMutation
 } = userApi;

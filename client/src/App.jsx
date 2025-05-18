@@ -9,6 +9,8 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { userApi } from './features/user/userApi.js';
 import { login } from './features/user/userSlice.js';
+import PostDetails from './components/Post/PostDetails.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
 
 function App() {
 
@@ -37,6 +39,8 @@ function App() {
       <Route path="/login" element={<Login/>}></Route>
       <Route path="/verify" element={<VerifyEmail/>}></Route>
       <Route path="/profile" element={<Profile/>}></Route>
+      <Route path="/post" element={<PostDetails/>}></Route>
+      <Route path="/forgot-password/:token" element={<ForgotPassword/>}></Route>
      </Routes>
      </>
   )

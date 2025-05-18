@@ -1,13 +1,31 @@
 import { useSelector } from "react-redux";
 import { Link } from "react-router"; // corrected router import
+import { useLogOutUserMutation } from "../features/user/userApi";
+import { toast, ToastContainer } from 'react-toastify';
 
 export default function Navbar() {
-  const user = useSelector((state) => state.user);
-  console.log(user);
+  const userr = useSelector((state) => state.user);
+  const user = userr?.user;
+  // console.log(user);
+
+  const [logOutUser] = useLogOutUserMutation();
+
+  const logOut = async() =>{
+    try {
+      const res = await logOutUser();
+      if(res.data){
+        toast(res.data.message);
+      }
+    } catch (error) {
+      console.error(error,"Log out problem");
+      toast(res.error.message )
+    }
+  };
 
   return (
     <div className="navbar bg-base-100 shadow-sm px-4">
       {/* Left Section */}
+      <ToastContainer />
       <div className="flex-1">  
         <Link to="/" className="btn btn-ghost text-xl">
           daisyUI
@@ -41,19 +59,27 @@ export default function Navbar() {
               <Link to="/">Home</Link>
             </li>
             <li>
-              <Link to="/profile">Profile</Link>
+              {user && (
+                 <Link to="/profile">Profile</Link>
+              )}
             </li>
             <li>
               <Link to="/settings">Settings</Link>
             </li>
             <li>
-              <Link to="/logout">Logout</Link>
+               {
+                user && (
+                  <Link to="/logout">Logout</Link>
+                )
+               }
             </li>
             <li>
               <Link to="/register">Register</Link>
             </li>
             <li>
-              <Link to="/login">Login</Link>
+               {user && (
+                <Link to="/login">Login</Link>
+               )}
             </li>
           </ul>
         </div>
@@ -64,15 +90,16 @@ export default function Navbar() {
         <Link to="/" className="btn btn-ghost">
           Home
         </Link>
-        <Link to="/register" className="btn btn-ghost">
+         {!user && <Link to="/register" className="btn btn-ghost">
           Register
-        </Link>
-        <Link to="/login" className="btn btn-ghost">
+        </Link>}
+         {!user && <Link to="/login" className="btn btn-ghost">
           Login
-        </Link>
-        <Link to="/profile" className="btn btn-ghost">
+        </Link>}
+         {user && <Link to="/profile" className="btn btn-ghost">
           Profile
         </Link>
+        }
 
         {/* Avatar */}
         <div className="dropdown dropdown-end">
@@ -93,16 +120,22 @@ export default function Navbar() {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <Link to="/profile" className="justify-between">
+               {
+                user && (
+                  <Link to="/profile" className="justify-between">
                 Profile
                 <span className="badge">New</span>
               </Link>
+                )
+               }
             </li>
             <li>
               <Link to="/settings">Settings</Link>
             </li>
             <li>
-              <Link to="/logout">Logout</Link>
+               {user && (
+                <button onClick={logOut}>Logout</button>
+               )}
             </li>
           </ul>
         </div>
